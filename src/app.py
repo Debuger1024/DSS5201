@@ -5,9 +5,9 @@ import plotly.express as px
 from dash import Dash, dcc, html, Input, Output
 
 # 1.1 Load the data
-codebook_csv_path = '../data/codebook.csv'
-recommended_citation_csv_path = '../data/recommended_citation.csv'
-undp_composite_indices_csv_path = '../data/undp_composite_indices.csv'
+codebook_csv_path = '/workspaces/DSS5201/data/codebook.csv'
+recommended_citation_csv_path = '/workspaces/DSS5201/data/recommended_citation.csv'
+undp_composite_indices_csv_path = '/workspaces/DSS5201/data/undp_composite_indices.csv'
 
 # Load the data into dataframes for exploration
 codebook_df = pd.read_csv(codebook_csv_path)
