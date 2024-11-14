@@ -2,7 +2,7 @@ import sys
 sys.path.append("src")  # 添加 src 路径到 Python 的搜索路径
 
 from app import create_app
-import os)
+import os
 
 if __name__ == '__main__':
     app = create_app()
