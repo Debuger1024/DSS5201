@@ -1,10 +1,9 @@
-import os
-from dash import Dash
-from flask import Flask
+import sys
+sys.path.append("src")  # 添加 src 路径到 Python 的搜索路径
 
-server = Flask(__name__)
-app = Dash(__name__, server=server)
+from my_dash import create_app
 
+app = create_app()
 port = int(os.getenv("PORT", 10000))
 
 if __name__ == '__main__':
