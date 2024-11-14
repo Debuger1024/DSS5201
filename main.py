@@ -1,7 +1,7 @@
 import sys
 sys.path.append("src")  # 添加 src 路径到 Python 的搜索路径
 
-from my_dash import create_app
+from app import create_app
 
 app = create_app()
 port = int(os.getenv("PORT", 10000))
