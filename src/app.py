@@ -98,6 +98,9 @@ def create_app():
         Input("checklist", "value"),
         Input("graph", "hoverData")
     )
+
+    server = app.server
+  
     def update_line_chart(selected_regions,hoverData):
         df = sample_data[sample_data['region'].isin(selected_regions)] 
         fig = px.line(df, x='year', y='human_development_index', color='country',
