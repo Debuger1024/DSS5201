@@ -5,9 +5,9 @@ import plotly.express as px
 from dash import Dash, dcc, html, Input, Output
 
 # 1.1 Load the data
-codebook_csv_path = 'data/codebook.csv'
-recommended_citation_csv_path = 'data/recommended_citation.csv'
-undp_composite_indices_csv_path = 'data/undp_composite_indices.csv'
+codebook_csv_path = '../data/codebook.csv'
+recommended_citation_csv_path = '../data/recommended_citation.csv'
+undp_composite_indices_csv_path = '../data/undp_composite_indices.csv'
 
 # Load the data into dataframes for exploration
 codebook_df = pd.read_csv(codebook_csv_path)
@@ -24,7 +24,7 @@ df_tidy_drop = df_tidy.dropna(subset=['human_development_index'])
 # Change the value of region
 df_cleaned = df_tidy_drop.copy() # To avoid SettingWithCopyWarning
 df_cleaned.loc[df_cleaned['country'] == 'World', 'region'] = 'World'
-replace_dict = {'SA': 'South Asis',
+replace_dict = {'SA': 'South Asia',
                 'SSA': 'Sub-Saharan Africa',
                 'ECA': 'Europe and Central Asia',
                 'AS': 'Arab States',
@@ -68,91 +68,94 @@ sample_data['custom_data'] = sample_data.apply(
                  row['mean_years_of_schooling'], row['gross_national_income_per_capita']],
     axis=1
 )
+def create_app():
+    # Plot the graph
+    app = Dash(__name__)
 
-# Plot the graph
-app = Dash(__name__)
+    app.layout = html.Div([
+        html.H4('HDI Over Time for All Countries'),
+        dcc.Graph(id="graph"),
+        # Create a selector of the regions
+        dcc.Checklist(
+            id="checklist",
+            options=[
+                {'label': 'Arab States', 'value': 'Arab States'},
+                {'label': 'East Asia and the Pacific', 'value': 'East Asia and the Pacific'},
+                {'label': 'Europe and Central Asia', 'value': 'Europe and Central Asia'},
+                {'label': 'Latin America and the Caribbean', 'value': 'Latin America and the Caribbean'},
+                {'label': 'South Asia', 'value': 'South Asia'},
+                {'label': 'Sub-Saharan Africa', 'value': 'Sub-Saharan Africa'},
+                {'label': 'Developed Region', 'value': 'Developed Region'},
+                {'label': 'World', 'value': 'World'}
+            ],
+            value=['World', 'East Asia and the Pacific'],  
+            inline=True
+        ),
+    ])
 
-app.layout = html.Div([
-    html.H4('HDI Over Time for All Countries'),
-    dcc.Graph(id="graph"),
-    # Create a selector of the regions
-    dcc.Checklist(
-        id="checklist",
-        options=[
-            {'label': 'Arab States', 'value': 'Arab States'},
-            {'label': 'East Asia and the Pacific', 'value': 'East Asia and the Pacific'},
-            {'label': 'Europe and Central Asia', 'value': 'Europe and Central Asia'},
-            {'label': 'Latin America and the Caribbean', 'value': 'Latin America and the Caribbean'},
-            {'label': 'South Asia', 'value': 'South Asia'},
-            {'label': 'Sub-Saharan Africa', 'value': 'Sub-Saharan Africa'},
-            {'label': 'Developed Region', 'value': 'Developed Region'},
-            {'label': 'World', 'value': 'World'}
-        ],
-        value=['World', 'East Asia and the Pacific'],  
-        inline=True
-    ),
-])
-
-@app.callback(
-    Output("graph", "figure"), 
-    Input("checklist", "value"),
-    Input("graph", "hoverData")
-)
-def update_line_chart(selected_regions,hoverData):
-    df = sample_data[sample_data['region'].isin(selected_regions)] 
-    fig = px.line(df, x='year', y='human_development_index', color='country',
-                  line_group='country',
-                  labels={
-                      'year': 'Year',
-                      'human_development_index': 'Human Development Index (HDI)'
-                  },
-                  custom_data=['custom_data'])
-    
-    for country in avg_hdi_per_country.index:
-        if country == 'World':
-            fig.update_traces(selector=dict(name=country),
-                              line=dict(dash='solid', width=2, color='black'))
-        else:
-            fig.update_traces(selector=dict(name=country),
-                              line=dict(dash='solid', width=1, color=country_color_map[country]))
-    
-    # When checking hovering, highlight the line
-    if hoverData:
-        hovered_country = hoverData['points'][0]['customdata'][0][0]   
-        fig.update_traces(selector=dict(name=hovered_country),
-                          line=dict(width=4))
-        
-    fig.update_traces(
-        hovertemplate="<b>%{customdata[0][0]}</b><br>"
-                  "%{customdata[0][1]} HDI value: %{customdata[0][2]:.3f}<br>"
-                  "HDI change from previous year: %{customdata[0][3]:+.2%}<br>"
-                  "Life expectancy at birth: %{customdata[0][4]:.1f} years<br>"
-                  "Expected years of schooling: %{customdata[0][5]:.1f} years<br>"
-                  "Mean years of schooling: %{customdata[0][6]:.1f} years<br>"
-                  "Gross National Income per capita: %{customdata[0][7]:,.0f} (constant 2017 PPP$)"
+    @app.callback(
+        Output("graph", "figure"), 
+        Input("checklist", "value"),
+        Input("graph", "hoverData")
     )
-    
-    fig.update_layout(width=1300, 
-                      height=700, 
-                      xaxis=dict(tickmode='linear', dtick=2),
-                      yaxis=dict(
-                          tickvals=[0.200, 0.280, 0.360, 0.440, 0.520, 0.600, 0.680, 0.760, 0.840, 0.920, 1.000],
-                          ticktext=['0.200', '0.280', '0.360', '0.440', '0.520', '0.600', '0.680', '0.760', '0.840', '0.920', '1.000']
-                      ),
-                      annotations=[
-                          dict(
-                              x=1.0, 
-                              y=1.05, 
-                              xref="paper",
-                              yref="paper",
-                              text="<b>Low (< 0.550)</b> | <b>Medium (0.550-0.699)</b> | <b>High (0.700-0.799)</b> | <b>Very high (≥ 0.800)</b>",
-                              showarrow=False,
-                              align="center",
-                              bgcolor="rgba(255,255,255,0.8)",
-                              bordercolor="black",
-                              borderwidth=1,
-                              font=dict(size=10)
-                          )
-                      ])
+    def update_line_chart(selected_regions,hoverData):
+        df = sample_data[sample_data['region'].isin(selected_regions)] 
+        fig = px.line(df, x='year', y='human_development_index', color='country',
+                    line_group='country',
+                    labels={
+                        'year': 'Year',
+                        'human_development_index': 'Human Development Index (HDI)'
+                    },
+                    custom_data=['custom_data'])
+        
+        for country in avg_hdi_per_country.index:
+            if country == 'World':
+                fig.update_traces(selector=dict(name=country),
+                                line=dict(dash='solid', width=2, color='black'))
+            else:
+                fig.update_traces(selector=dict(name=country),
+                                line=dict(dash='solid', width=1, color=country_color_map[country]))
+        
+        # When checking hovering, highlight the line
+        if hoverData:
+            hovered_country = hoverData['points'][0]['customdata'][0][0]   
+            fig.update_traces(selector=dict(name=hovered_country),
+                            line=dict(width=4))
             
-    return fig
+        fig.update_traces(
+            hovertemplate="<b>%{customdata[0][0]}</b><br>"
+                    "%{customdata[0][1]} HDI value: %{customdata[0][2]:.3f}<br>"
+                    "HDI change from previous year: %{customdata[0][3]:+.2%}<br>"
+                    "Life expectancy at birth: %{customdata[0][4]:.1f} years<br>"
+                    "Expected years of schooling: %{customdata[0][5]:.1f} years<br>"
+                    "Mean years of schooling: %{customdata[0][6]:.1f} years<br>"
+                    "Gross National Income per capita: %{customdata[0][7]:,.0f} (constant 2017 PPP$)"
+        )
+        
+        fig.update_layout(width=1300, 
+                        height=700, 
+                        xaxis=dict(tickmode='linear', dtick=2),
+                        yaxis=dict(
+                            tickvals=[0.200, 0.280, 0.360, 0.440, 0.520, 0.600, 0.680, 0.760, 0.840, 0.920, 1.000],
+                            ticktext=['0.200', '0.280', '0.360', '0.440', '0.520', '0.600', '0.680', '0.760', '0.840', '0.920', '1.000']
+                        ),
+                        annotations=[
+                            dict(
+                                x=1.0, 
+                                y=1.05, 
+                                xref="paper",
+                                yref="paper",
+                                text="<b>Low (< 0.550)</b> | <b>Medium (0.550-0.699)</b> | <b>High (0.700-0.799)</b> | <b>Very high (≥ 0.800)</b>",
+                                showarrow=False,
+                                align="center",
+                                bgcolor="rgba(255,255,255,0.8)",
+                                bordercolor="black",
+                                borderwidth=1,
+                                font=dict(size=10)
+                            )
+                        ])
+                
+        return fig
+    
+    return app
+
