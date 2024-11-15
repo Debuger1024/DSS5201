@@ -6,6 +6,7 @@ import os
 
 if __name__ == '__main__':
     app = create_app()
+    server = app.server
     port = int(os.environ.get("PORT", 10000))  # 默认端口设为8050
     app.run_server(host="0.0.0.0", port=port)
 
